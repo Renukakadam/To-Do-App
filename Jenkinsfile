@@ -10,7 +10,7 @@ pipeline {
         stage('Clone Repository') {
             steps {
                 script {
-                    // Explicitly specify the 'main' branch instead of 'master'
+                    // Use 'main' branch explicitly
                     git branch: 'main', url: 'https://github.com/Renukakadam/To-Do-App.git'
                 }
             }
@@ -18,28 +18,22 @@ pipeline {
 
         stage('Build Docker Image') {
             steps {
-                script {
-                    bat 'docker build -t $IMAGE_NAME .'
-                }
+                bat "docker build -t %IMAGE_NAME% ."
             }
         }
 
         stage('Remove Old Container (if exists)') {
             steps {
-                script {
-                    sh '''
-                    docker stop $CONTAINER_NAME || true
-                    docker rm $CONTAINER_NAME || true
-                    '''
-                }
+                bat '''
+                docker stop %CONTAINER_NAME% || exit 0
+                docker rm %CONTAINER_NAME% || exit 0
+                '''
             }
         }
 
         stage('Run Docker Container') {
             steps {
-                script {
-                    sh 'docker run -d -p 5000:5000 --name $CONTAINER_NAME $IMAGE_NAME'
-                }
+                bat "docker run -d -p 5000:5000 --name %CONTAINER_NAME% %IMAGE_NAME%"
             }
         }
     }
