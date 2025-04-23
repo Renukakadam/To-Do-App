@@ -1,18 +1,33 @@
 pipeline {
     agent any
 
+    environment {
+        IMAGE_NAME = 'todo-app'
+        CONTAINER_NAME = 'todo-app-container'
+    }
+
     stages {
         stage('Clone Repository') {
             steps {
-                echo 'Cloning the repo...'
-                // This would clone from GitHub in real-world use
+                git 'https://github.com/Renukakadam/To-Do-App.git'
             }
         }
 
         stage('Build Docker Image') {
             steps {
                 script {
-                    docker.build('todo-app-image')
+                    sh 'docker build -t $IMAGE_NAME .'
+                }
+            }
+        }
+
+        stage('Remove Old Container (if exists)') {
+            steps {
+                script {
+                    sh '''
+                    docker stop $CONTAINER_NAME || true
+                    docker rm $CONTAINER_NAME || true
+                    '''
                 }
             }
         }
@@ -20,15 +35,18 @@ pipeline {
         stage('Run Docker Container') {
             steps {
                 script {
-                    docker.image('todo-app-image').run('-p 5000:5000')
+                    sh 'docker run -d -p 5000:5000 --name $CONTAINER_NAME $IMAGE_NAME'
                 }
             }
         }
     }
 
     post {
-        always {
-            echo 'Pipeline execution completed.'
+        success {
+            echo '🎉 To-Do app deployed successfully!'
+        }
+        failure {
+            echo '❌ Build or deployment failed.'
         }
     }
 }
