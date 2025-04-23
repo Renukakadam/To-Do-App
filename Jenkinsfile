@@ -4,48 +4,52 @@ pipeline {
     environment {
         IMAGE_NAME = 'todo-app'
         CONTAINER_NAME = 'todo-app-container'
-        PORT = '5000'
     }
 
     stages {
         stage('Clone Repository') {
             steps {
-                echo '📥 Cloning GitHub repository...'
-                git 'https://github.com/Renukakadam/To-Do-App.git'
+                script {
+                    // Explicitly specify the 'main' branch instead of 'master'
+                    git branch: 'main', url: 'https://github.com/Renukakadam/To-Do-App.git'
+                }
             }
         }
 
         stage('Build Docker Image') {
             steps {
-                echo '🐳 Building Docker image...'
-                sh "docker build -t ${IMAGE_NAME} ."
+                script {
+                    sh 'docker build -t $IMAGE_NAME .'
+                }
             }
         }
 
-        stage('Stop & Remove Old Container') {
+        stage('Remove Old Container (if exists)') {
             steps {
-                echo '🧹 Cleaning up old container (if exists)...'
-                sh """
-                    docker stop ${CONTAINER_NAME} || true
-                    docker rm ${CONTAINER_NAME} || true
-                """
+                script {
+                    sh '''
+                    docker stop $CONTAINER_NAME || true
+                    docker rm $CONTAINER_NAME || true
+                    '''
+                }
             }
         }
 
-        stage('Run New Container') {
+        stage('Run Docker Container') {
             steps {
-                echo '🚀 Running new container...'
-                sh "docker run -d -p ${PORT}:${PORT} --name ${CONTAINER_NAME} ${IMAGE_NAME}"
+                script {
+                    sh 'docker run -d -p 5000:5000 --name $CONTAINER_NAME $IMAGE_NAME'
+                }
             }
         }
     }
 
     post {
         success {
-            echo '✅ Deployment successful! App is live on http://localhost:5000/'
+            echo '🎉 To-Do app deployed successfully!'
         }
         failure {
-            echo '❌ Deployment failed. Please check the logs.'
+            echo '❌ Build or deployment failed.'
         }
     }
 }
