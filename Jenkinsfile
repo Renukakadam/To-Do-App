@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     environment {
-        IMAGE_NAME = 'todo-app'
+        IMAGE_NAME = 'insha79/to-do-app'
         CONTAINER_NAME = 'todo-app-container'
     }
 
@@ -10,7 +10,6 @@ pipeline {
         stage('Clone Repository') {
             steps {
                 script {
-                    // Use 'main' branch explicitly
                     git branch: 'main', url: 'https://github.com/Renukakadam/To-Do-App.git'
                 }
             }
@@ -19,6 +18,17 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 bat "docker build -t %IMAGE_NAME% ."
+            }
+        }
+
+        stage('Push Docker Image to Docker Hub') {
+            steps {
+                withCredentials([usernamePassword(credentialsId: 'dockerhub-credentials', usernameVariable: 'DOCKERHUB_CREDENTIALS_USR', passwordVariable: 'DOCKERHUB_CREDENTIALS_PSW')]) {
+                    bat '''
+                    echo %DOCKERHUB_CREDENTIALS_PSW% | docker login -u %DOCKERHUB_CREDENTIALS_USR% --password-stdin
+                    docker push %IMAGE_NAME%
+                    '''
+                }
             }
         }
 
